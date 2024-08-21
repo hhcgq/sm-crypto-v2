@@ -78,6 +78,13 @@ class ECFieldElementFp {
   square() {
     return new ECFieldElementFp(this.q, this.x.square().mod(this.q))
   }
+
+  /**
+   * 获取字节长度
+   */
+  getByteLength() {
+    return Math.floor((this.toBigInteger().bitLength() + 7) / 8)
+  }
 }
 
 class ECPointFp {
@@ -89,6 +96,41 @@ class ECPointFp {
     this.z = z == null ? BigInteger.ONE : z
     this.zinv = null
     // TODO: compression flag
+  }
+
+  static decodeFrom(curve, enc) {
+    // const type = enc[0]
+    const dataLen = enc.length - 1
+
+    // Extract x and y as byte arrays
+    const xBa = enc.slice(1, 1 + dataLen / 2)
+    const yBa = enc.slice(1 + dataLen / 2, 1 + dataLen)
+
+    // Prepend zero byte to prevent interpretation as negative integer
+    xBa.unshift(0)
+    yBa.unshift(0)
+
+    // Convert to BigIntegers
+    const x = new BigInteger(xBa)
+    const y = new BigInteger(yBa)
+
+    // Return point
+    return new ECPointFp(curve, curve.fromBigInteger(x), curve.fromBigInteger(y))
+  }
+
+  static decodeFromHex(curve, encHex) {
+    // const type = encHex.substr(0, 2) // shall be "04"
+    const dataLen = encHex.length - 2
+
+    // Extract x and y as byte arrays
+    const xHex = encHex.substr(2, dataLen / 2)
+    const yHex = encHex.substr(2 + dataLen / 2, dataLen / 2)
+
+    // Convert to BigIntegers
+    const x = new BigInteger(xHex, 16)
+    const y = new BigInteger(yHex, 16)
+    // Return point
+    return new ECPointFp(curve, curve.fromBigInteger(x), curve.fromBigInteger(y))
   }
 
   getX() {
@@ -257,6 +299,73 @@ class ECPointFp {
     }
 
     return Q
+  }
+
+  /**
+   * Compute this*j + x*k (simultaneous multiplication)
+   */
+  multiplyTwo(j, x, k) {
+    let i
+    if (j.bitLength() > k.bitLength()) i = j.bitLength() - 1
+    else { i = k.bitLength() - 1 }
+
+    let R = this.curve.getInfinity()
+    const both = this.add(x)
+    while (i >= 0) {
+      R = R.twice()
+      if (j.testBit(i)) {
+        if (k.testBit(i)) {
+          R = R.add(both)
+        } else {
+          R = R.add(this)
+        }
+      } else if (k.testBit(i)) {
+        R = R.add(x)
+      }
+      --i
+    }
+
+    return R
+  }
+
+  getEncoded(compressed) {
+    const integerToBytes = function (i, len) {
+      let bytes = i.toByteArrayUnsigned()
+
+      if (len < bytes.length) {
+        bytes = bytes.slice(bytes.length - len)
+      } else {
+        while (len > bytes.length) {
+          bytes.unshift(0)
+        }
+      }
+      return bytes
+    }
+
+    const x = this.getX().toBigInteger()
+    const y = this.getY().toBigInteger()
+
+    // Get value as a 32-byte Buffer
+    // Fixed length based on a patch by bitaddress.org and Casascius
+    let enc = integerToBytes(x, 32)
+
+    if (compressed) {
+      if (y.isEven()) {
+        // Compressed even pubkey
+        // M = 02 || X
+        enc.unshift(0x02)
+      } else {
+        // Compressed uneven pubkey
+        // M = 03 || X
+        enc.unshift(0x03)
+      }
+    } else {
+      // Uncompressed pubkey
+      // M = 04 || X || Y
+      enc.unshift(0x04)
+      enc = enc.concat(integerToBytes(y, 32))
+    }
+    return enc
   }
 }
 

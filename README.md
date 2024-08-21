@@ -7,7 +7,7 @@
 ## 安装
 
 ```bash
-npm install --save miniprogram-sm-crypto
+npm install --save miniprogram-sm-crypto-v2
 ```
 
 ## sm2
@@ -15,7 +15,7 @@ npm install --save miniprogram-sm-crypto
 ### 获取密钥对
 
 ```js
-const sm2 = require('miniprogram-sm-crypto').sm2
+const sm2 = require('miniprogram-sm-crypto-v2').sm2
 
 let keypair = sm2.generateKeyPairHex()
 
@@ -38,11 +38,13 @@ verifyResult = sm2.verifyPublicKey(compressedPublicKey) // 验证公钥
 ### 加密解密
 
 ```js
-const sm2 = require('miniprogram-sm-crypto').sm2
+const sm2 = require('miniprogram-sm-crypto-v2').sm2
 const cipherMode = 1 // 1 - C1C3C2，0 - C1C2C3，默认为1
 
-let encryptData = sm2.doEncrypt(msgString, publicKey, cipherMode) // 加密结果
-let decryptData = sm2.doDecrypt(encryptData, privateKey, cipherMode) // 解密结果
+// 支持使用 asn1 对加密结果进行编码，在 options 参数中传入 { asn1: true } 即可，默认不开启
+let encryptData = sm2.doEncrypt(msgString, publicKey, cipherMode, { asn1: false }) // 加密结果
+// 支持使用 asn1 对密文进行解码再解密，在 options 参数中传入 { asn1: true } 即可，默认不开启
+let decryptData = sm2.doDecrypt(encryptData, privateKey, cipherMode, { asn1: false }) // 解密结果
 
 encryptData = sm2.doEncrypt(msgArray, publicKey, cipherMode) // 加密结果，输入数组
 decryptData = sm2.doDecrypt(encryptData, privateKey, cipherMode, {output: 'array'}) // 解密结果，输出数组
@@ -55,7 +57,7 @@ decryptData = sm2.doDecrypt(encryptData, privateKey, cipherMode, {output: 'array
 > ps：理论上来说，只做纯签名是最快的。
 
 ```js
-const sm2 = require('miniprogram-sm-crypto').sm2
+const sm2 = require('miniprogram-sm-crypto-v2').sm2
 
 // 纯签名 + 生成椭圆曲线点
 let sigValueHex = sm2.doSignature(msg, privateKey) // 签名
@@ -109,7 +111,7 @@ let verifyResult6 = sm2.doVerifySignature(msgString, sigValueHex6, publicKey, {
 ### 获取椭圆曲线点
 
 ```js
-const sm2 = require('miniprogram-sm-crypto').sm2
+const sm2 = require('miniprogram-sm-crypto-v2').sm2
 
 let point = sm2.getPoint() // 获取一个椭圆曲线点，可在sm2签名时传入
 ```
@@ -117,7 +119,7 @@ let point = sm2.getPoint() // 获取一个椭圆曲线点，可在sm2签名时�
 ### 根据私钥获取公钥
 
 ```js
-const sm2 = require('sm-crypto).sm2
+const sm2 = require('miniprogram-sm-crypto-v2').sm2
 
 let publicKey = sm2.getPublicKeyFromPrivateKey(privateKey)
 ```
@@ -125,7 +127,7 @@ let publicKey = sm2.getPublicKeyFromPrivateKey(privateKey)
 ## sm3
 
 ```js
-const sm3 = require('miniprogram-sm-crypto').sm3
+const sm3 = require('miniprogram-sm-crypto-v2').sm3
 
 let hashData = sm3('abc') // 杂凑
 
@@ -140,7 +142,7 @@ hashData = sm3('abc', {
 ### 加密
 
 ```js
-const sm4 = require('miniprogram-sm-crypto').sm4
+const sm4 = require('miniprogram-sm-crypto-v2').sm4
 const msg = 'hello world! 我是 juneandgreen.' // 可以为 utf8 串或字节数组
 const key = '0123456789abcdeffedcba9876543210' // 可以为 16 进制串或字节数组，要求为 128 比特
 
@@ -153,7 +155,7 @@ let encryptData = sm4.encrypt(msg, key, {mode: 'cbc', iv: 'fedcba987654321001234
 ### 解密
 
 ```js
-const sm4 = require('miniprogram-sm-crypto').sm4
+const sm4 = require('miniprogram-sm-crypto-v2').sm4
 const encryptData = '0e395deb10f6e8a17e17823e1fd9bd98a1bff1df508b5b8a1efb79ec633d1bb129432ac1b74972dbe97bab04f024e89c' // 可以为 16 进制串或字节数组
 const key = '0123456789abcdeffedcba9876543210' // 可以为 16 进制串或字节数组，要求为 128 比特
 

@@ -1,6 +1,6 @@
 {
-	"name": "miniprogram-sm-crypto",
-	"version": "0.3.13",
+	"name": "miniprogram-sm-crypto-v2",
+	"version": "0.0.2",
 	"description": "miniprogram js library",
 	"main": "miniprogram_dist/index.js",
 	"scripts": {
@@ -19,9 +19,8 @@
 	"miniprogram": "miniprogram_dist",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/wechat-miniprogram/sm-crypto.git"
+		"url": "https://github.com/hh-cgq/sm-crypto-v2.git"
 	},
-	"author": "wechat-miniprogram",
 	"license": "MIT",
 	"devDependencies": {
 		"babel-core": "^6.26.3",

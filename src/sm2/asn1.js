@@ -79,6 +79,19 @@ class DERInteger extends ASN1Object {
   }
 }
 
+class DEROctetString extends ASN1Object {
+  constructor(s) {
+    super()
+
+    this.t = '04' // octstr 标签说明
+    if (s) this.v = s.toLowerCase()
+  }
+
+  getValue() {
+    return this.v
+  }
+}
+
 class DERSequence extends ASN1Object {
   constructor(asn1Array) {
     super()
@@ -98,7 +111,13 @@ class DERSequence extends ASN1Object {
  */
 function getLenOfL(str, start) {
   if (+str[start + 2] < 8) return 1 // l 以0开头，则表示短格式，只占一个字节
-  return +str.substr(start + 2, 2) & 0x7f + 1 // 长格式，取第一个字节后7位作为长度真正占用字节数，再加上本身
+  // return +str.substr(start + 2, 2) & 0x7f + 1 // 长格式，取第一个字节后7位作为长度真正占用字节数，再加上本身
+  const encoded = str.slice(start + 2, start + 6)
+  const headHex = encoded.slice(0, 2)
+  const head = parseInt(headHex, 16)
+  const nHexLength = (head - 128) * 2
+
+  return nHexLength
 }
 
 /**
@@ -134,7 +153,14 @@ module.exports = {
 
     return derSeq.getEncodedHex()
   },
-
+  encodeEnc(x, y, hash, cipher) {
+    const derX = new DERInteger(x)
+    const derY = new DERInteger(y)
+    const derHash = new DEROctetString(hash)
+    const derCipher = new DEROctetString(cipher)
+    const derSeq = new DERSequence([derX, derY, derHash, derCipher])
+    return derSeq.getEncodedHex()
+  },
   /**
    * 解析 ASN.1 der，针对 sm2 验签
    */
@@ -157,5 +183,32 @@ module.exports = {
     const s = new BigInteger(vS, 16)
 
     return {r, s}
+  },
+  decodeEnc(input) {
+    function extractSequence(input2, start2) {
+      const vIndex = getStartOfV(input2, start2)
+      const length = getL(input2, start2)
+      const value = input2.substring(vIndex, vIndex + length * 2)
+      const nextStart = vIndex + value.length
+      return {
+        value,
+        nextStart
+      }
+    }
+
+    const start = getStartOfV(input, 0)
+
+    const {value: vR, nextStart: startS} = extractSequence(input, start)
+    const {value: vS, nextStart: startHash} = extractSequence(input, startS)
+    const {value: hash, nextStart: startCipher} = extractSequence(input, startHash)
+    const {value: cipher} = extractSequence(input, startCipher)
+
+    const x = vR
+    // new BigInteger(vR, 16)
+    const y = vS
+    // new BigInteger(vS, 16)
+    return {
+      x, y, hash, cipher
+    }
   }
 }

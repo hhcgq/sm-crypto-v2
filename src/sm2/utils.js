@@ -44,8 +44,9 @@ function generateKeyPairHex(a, b, c) {
   const Px = leftPad(P.getX().toBigInteger().toString(16), 64)
   const Py = leftPad(P.getY().toBigInteger().toString(16), 64)
   const publicKey = '04' + Px + Py
-
-  return {privateKey, publicKey}
+  return {
+    privateKey, publicKey, Px, Py
+  }
 }
 
 /**

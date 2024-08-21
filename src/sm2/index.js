@@ -76,7 +76,13 @@ function doDecrypt(encryptData, privateKey, cipherMode = 1, {
     const {
       x, y, cipher, hash
     } = decodeEnc(encryptData)
-    c1 = _.getGlobalCurve().decodePointHex('04' + x + y)
+    let xP = x
+    let yP = y
+    if ((x.length > 64 || y.length > 64) && !(x.length > 64 && y.length > 64)) {
+      xP = x.substr(x.length - 64)
+      yP = y.substr(y.length - 64)
+    }
+    c1 = _.getGlobalCurve().decodePointHex('04' + xP + yP)
     c3 = hash
     c2 = cipher
     if (cipherMode === C1C2C3) {
